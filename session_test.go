@@ -37,9 +37,11 @@ import (
 	"strings"
 	"time"
 
+	"mgo"
+
+	"mgo/bson"
+
 	. "gopkg.in/check.v1"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 )
 
 func (s *S) TestRunString(c *C) {

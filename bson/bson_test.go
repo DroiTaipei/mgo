@@ -39,8 +39,9 @@ import (
 	"testing"
 	"time"
 
+	"bson"
+
 	. "gopkg.in/check.v1"
-	"gopkg.in/mgo.v2/bson"
 	"gopkg.in/yaml.v2"
 )
 
