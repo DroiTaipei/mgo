@@ -37,9 +37,9 @@ import (
 	"strings"
 	"time"
 
-	"mgo"
+	"github.com/DroiTaipei/mgo"
 
-	"mgo/bson"
+	"github.com/DroiTaipei/mgo/bson"
 
 	. "gopkg.in/check.v1"
 )

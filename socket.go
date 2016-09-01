@@ -33,7 +33,7 @@ import (
 	"sync"
 	"time"
 
-	"mgo/bson"
+	"github.com/DroiTaipei/mgo/bson"
 )
 
 type replyFunc func(err error, reply *replyOp, docNum int, docData []byte)

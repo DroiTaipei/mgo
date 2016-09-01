@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"sort"
 
-	"mgo/bson"
+	"github.com/DroiTaipei/mgo/bson"
 )
 
 // Bulk represents an operation that can be prepared with several

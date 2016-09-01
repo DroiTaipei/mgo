@@ -38,7 +38,7 @@ import (
 	"sync"
 	"time"
 
-	"mgo"
+	"github.com/DroiTaipei/mgo"
 
 	. "gopkg.in/check.v1"
 )
