@@ -2,13 +2,14 @@ package txn_test
 
 import (
 	"flag"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
-	"gopkg.in/mgo.v2/dbtest"
-	"gopkg.in/mgo.v2/txn"
-	. "gopkg.in/check.v1"
 	"math/rand"
 	"time"
+
+	"github.com/DroiTaipei/mgo"
+	"github.com/DroiTaipei/mgo/bson"
+	"github.com/DroiTaipei/mgo/dbtest"
+	"github.com/DroiTaipei/mgo/txn"
+	. "gopkg.in/check.v1"
 )
 
 var (
