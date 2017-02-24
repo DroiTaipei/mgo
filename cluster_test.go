@@ -1584,7 +1584,7 @@ func (s *S) TestPoolLimitSimple(c *C) {
 			defer copy.Close()
 			started := time.Now()
 			c.Check(copy.Ping(), IsNil)
-			done <- time.Now().Sub(started)
+			done <- time.Since(started)
 		}()
 
 		time.Sleep(300 * time.Millisecond)
@@ -1634,7 +1634,7 @@ func (s *S) TestPoolLimitMany(c *C) {
 	// connection to the master, over the limit. Once the goroutine
 	// above releases its socket, it should move on.
 	session.Ping()
-	delay := time.Now().Sub(before)
+	delay := time.Since(before)
 	c.Assert(delay > 3e9, Equals, true)
 	c.Assert(delay < 6e9, Equals, true)
 }
@@ -1801,7 +1801,7 @@ func (s *S) TestPrimaryShutdownOnAuthShard(c *C) {
 	}
 	c.Assert(err, IsNil)
 
-	count, err := coll.Count()
+	count, _ := coll.Count()
 	c.Assert(count > 1, Equals, true)
 }
 

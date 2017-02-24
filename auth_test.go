@@ -271,7 +271,7 @@ func (s *S) TestAuthUpsertUserOtherDBRoles(c *C) {
 	defer admindb.RemoveUser("myruser")
 
 	admindb.Logout()
-	err = admindb.Login("myruser", "mypass")
+	admindb.Login("myruser", "mypass")
 
 	coll := session.DB("mydb").C("mycoll")
 	err = coll.Insert(M{"n": 1})
@@ -945,7 +945,7 @@ func (s *S) TestAuthX509Cred(c *C) {
 	session.LogoutAll()
 
 	c.Logf("Connected! Ensuring authentication is required...")
-	names, err := session.DatabaseNames()
+	_, err = session.DatabaseNames()
 	c.Assert(err, ErrorMatches, "not authorized .*")
 
 	cred := &mgo.Credential{
@@ -959,7 +959,7 @@ func (s *S) TestAuthX509Cred(c *C) {
 	c.Assert(err, IsNil)
 	c.Logf("Authenticated!")
 
-	names, err = session.DatabaseNames()
+	names, err := session.DatabaseNames()
 	c.Assert(err, IsNil)
 	c.Assert(len(names) > 0, Equals, true)
 }
@@ -1063,7 +1063,7 @@ func (kerberosSuite *KerberosSuite) TestAuthKerberosCred(c *C) {
 	defer session.Close()
 
 	c.Logf("Connected! Testing the need for authentication...")
-	n, err := session.DB("kerberos").C("test").Find(M{}).Count()
+	_, err = session.DB("kerberos").C("test").Find(M{}).Count()
 	c.Assert(err, ErrorMatches, ".*authorized.*")
 
 	c.Logf("Authenticating...")
@@ -1071,7 +1071,7 @@ func (kerberosSuite *KerberosSuite) TestAuthKerberosCred(c *C) {
 	c.Assert(err, IsNil)
 	c.Logf("Authenticated!")
 
-	n, err = session.DB("kerberos").C("test").Find(M{}).Count()
+	n, err := session.DB("kerberos").C("test").Find(M{}).Count()
 	c.Assert(err, IsNil)
 	c.Assert(n, Equals, 1)
 }

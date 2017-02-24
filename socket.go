@@ -29,6 +29,7 @@ package mgo
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -67,18 +68,17 @@ const (
 )
 
 type queryOp struct {
-	collection string
 	query      interface{}
+	collection string
+	serverTags []bson.D
+	selector   interface{}
+	replyFunc  replyFunc
+	mode       Mode
 	skip       int32
 	limit      int32
-	selector   interface{}
-	flags      queryOpFlags
-	replyFunc  replyFunc
-
-	mode       Mode
 	options    queryWrapper
 	hasOptions bool
-	serverTags []bson.D
+	flags      queryOpFlags
 }
 
 type queryWrapper struct {
@@ -395,7 +395,7 @@ func (socket *mongoSocket) Query(ops ...interface{}) (err error) {
 			}
 		}
 		start := len(buf)
-		var replyFunc replyFunc
+		var rf replyFunc
 		switch op := op.(type) {
 
 		case *updateOp:
@@ -442,7 +442,7 @@ func (socket *mongoSocket) Query(ops ...interface{}) (err error) {
 					return err
 				}
 			}
-			replyFunc = op.replyFunc
+			rf = op.replyFunc
 
 		case *getMoreOp:
 			buf = addHeader(buf, 2005)
@@ -450,7 +450,7 @@ func (socket *mongoSocket) Query(ops ...interface{}) (err error) {
 			buf = addCString(buf, op.collection)
 			buf = addInt32(buf, op.limit)
 			buf = addInt64(buf, op.cursorId)
-			replyFunc = op.replyFunc
+			rf = op.replyFunc
 
 		case *deleteOp:
 			buf = addHeader(buf, 2006)
@@ -477,9 +477,9 @@ func (socket *mongoSocket) Query(ops ...interface{}) (err error) {
 
 		setInt32(buf, start, int32(len(buf)-start))
 
-		if replyFunc != nil {
+		if rf != nil {
 			request := &requests[requestCount]
-			request.replyFunc = replyFunc
+			request.replyFunc = rf
 			request.bufferPos = start
 			requestCount++
 		}
@@ -530,7 +530,7 @@ func (socket *mongoSocket) Query(ops ...interface{}) (err error) {
 	return err
 }
 
-func fill(r net.Conn, b []byte) error {
+func fill(r io.Reader, b []byte) error {
 	l := len(b)
 	n, err := r.Read(b)
 	for n != l && err == nil {

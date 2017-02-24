@@ -75,22 +75,22 @@ const (
 // multiple goroutines will cause them to share the same underlying socket.
 // See the documentation on Session.SetMode for more details.
 type Session struct {
-	m                sync.RWMutex
+	defaultdb        string
+	sourcedb         string
+	syncTimeout      time.Duration
+	sockTimeout      time.Duration
+	poolLimit        int
+	consistency      Mode
+	creds            []Credential
+	dialCred         *Credential
+	safeOp           *queryOp
 	cluster_         *mongoCluster
 	slaveSocket      *mongoSocket
 	masterSocket     *mongoSocket
-	slaveOk          bool
-	consistency      Mode
+	m                sync.RWMutex
 	queryConfig      query
-	safeOp           *queryOp
-	syncTimeout      time.Duration
-	sockTimeout      time.Duration
-	defaultdb        string
-	sourcedb         string
-	dialCred         *Credential
-	creds            []Credential
-	poolLimit        int
 	bypassValidation bool
+	slaveOk          bool
 }
 
 type Database struct {
@@ -133,10 +133,10 @@ type Iter struct {
 	err            error
 	op             getMoreOp
 	prefetch       float64
-	limit          int32
 	docsToReceive  int
 	docsBeforeMore int
 	timeout        time.Duration
+	limit          int32
 	timedout       bool
 	findCmd        bool
 }
@@ -328,16 +328,16 @@ type DialInfo struct {
 	// Addrs holds the addresses for the seed servers.
 	Addrs []string
 
-	// Direct informs whether to establish connections only with the
-	// specified seed servers, or to obtain information for the whole
-	// cluster and establish connections with further servers too.
-	Direct bool
-
 	// Timeout is the amount of time to wait for a server to respond when
 	// first connecting and on follow up operations in the session. If
 	// timeout is zero, the call may block forever waiting for a connection
 	// to be established. Timeout does not affect logic in DialServer.
 	Timeout time.Duration
+
+	// Direct informs whether to establish connections only with the
+	// specified seed servers, or to obtain information for the whole
+	// cluster and establish connections with further servers too.
+	Direct bool
 
 	// FailFast will cause connection and query attempts to fail faster when
 	// the server is unavailable, instead of retrying until the configured
@@ -481,9 +481,7 @@ type urlInfo struct {
 }
 
 func extractURL(s string) (*urlInfo, error) {
-	if strings.HasPrefix(s, "mongodb://") {
-		s = s[10:]
-	}
+	strings.TrimPrefix(s, "mongodb://")
 	info := &urlInfo{options: make(map[string]string)}
 	if c := strings.Index(s, "?"); c != -1 {
 		for _, pair := range strings.FieldsFunc(s[c+1:], isOptSep) {
@@ -1057,12 +1055,8 @@ type Index struct {
 }
 
 type Collation struct {
-
 	// Locale defines the collation locale.
 	Locale string `bson:"locale"`
-
-	// CaseLevel defines whether to turn case sensitivity on at strength 1 or 2.
-	CaseLevel bool `bson:"caseLevel,omitempty"`
 
 	// CaseFirst may be set to "upper" or "lower" to define whether
 	// to have uppercase or lowercase items first. Default is "off".
@@ -1086,15 +1080,18 @@ type Collation struct {
 	// Strength defaults to 3.
 	Strength int `bson:"strength,omitempty"`
 
-	// NumericOrdering defines whether to order numbers based on numerical
-	// order and not collation order.
-	NumericOrdering bool `bson:"numericOrdering,omitempty"`
-
 	// Alternate controls whether spaces and punctuation are considered base characters.
 	// May be set to "non-ignorable" (spaces and punctuation considered base characters)
 	// or "shifted" (spaces and punctuation not considered base characters, and only
 	// distinguished at strength > 3). Defaults to "non-ignorable".
 	Alternate string `bson:"alternate,omitempty"`
+
+	// CaseLevel defines whether to turn case sensitivity on at strength 1 or 2.
+	CaseLevel bool `bson:"caseLevel,omitempty"`
+
+	// NumericOrdering defines whether to order numbers based on numerical
+	// order and not collation order.
+	NumericOrdering bool `bson:"numericOrdering,omitempty"`
 
 	// Backwards defines whether to have secondary differences considered in reverse order,
 	// as done in the French language.
@@ -1400,9 +1397,9 @@ func (c *Collection) DropIndexName(name string) error {
 	}
 
 	if index.Name != "" {
-		keyInfo, err := parseIndexKey(index.Key)
-		if err != nil {
-			return err
+		keyInfo, pErr := parseIndexKey(index.Key)
+		if pErr != nil {
+			return pErr
 		}
 
 		cacheKey := c.FullName + "\x00" + keyInfo.name
@@ -3371,8 +3368,8 @@ func (db *Database) CollectionNames() (names []string, err error) {
 		for iter.Next(&coll) {
 			names = append(names, coll.Name)
 		}
-		if err := iter.Close(); err != nil {
-			return nil, err
+		if itErr := iter.Close(); itErr != nil {
+			return nil, itErr
 		}
 		sort.Strings(names)
 		return names, err
@@ -4021,11 +4018,11 @@ type mapReduceCmd struct {
 	Map        string ",omitempty"
 	Reduce     string ",omitempty"
 	Finalize   string ",omitempty"
-	Limit      int32  ",omitempty"
 	Out        interface{}
 	Query      interface{} ",omitempty"
 	Sort       interface{} ",omitempty"
 	Scope      interface{} ",omitempty"
+	Limit      int32       ",omitempty"
 	Verbose    bool        ",omitempty"
 }
 
