@@ -4964,3 +4964,8 @@ func hasErrMsg(d []byte) bool {
 	}
 	return false
 }
+
+// Addr return the list of server address the session dial to.
+func (s *Session) Addr() []string {
+	return s.cluster().GetUserSeeds()
+}

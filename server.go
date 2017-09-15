@@ -461,9 +461,3 @@ func absDuration(d time.Duration) time.Duration {
 	}
 	return d
 }
-
-// Add by Ray for debug log
-// Server return which server the socket connect to.
-func (s *Session) Server() *mongoServer {
-	return s.masterSocket.Server()
-}
