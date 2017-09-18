@@ -680,3 +680,7 @@ func (cluster *mongoCluster) ResetIndexCache() {
 	cluster.cachedIndex = make(map[string]bool)
 	cluster.Unlock()
 }
+
+func (cluster *mongoCluster) GetUserSeeds() []string {
+	return cluster.userSeeds
+}
